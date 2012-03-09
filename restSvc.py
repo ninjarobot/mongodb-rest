@@ -22,6 +22,14 @@ def getConnection():
 def getItemsAsJson(items):
     return json.dumps(items, cls=MongoEncoder)
 
+def parseParam(p):
+	if string.find(p,'"') > -1:
+		return p.replace('\"','')
+	elif string.find(p,'.') > -1:
+		return float(p)
+	else:
+		return long(p)
+
 def parseQuery(query):
 	print query
 	ne = string.split(query,'!=')
@@ -31,36 +39,45 @@ def parseQuery(query):
 	lt = string.split(query,'<')
 	eq = string.split(query,'=')
 	if len(ne) > 1:
+		ne[1] = parseParam(ne[1])
 		print ne
 		return {ne[0]:{"$ne":ne[1]}}
 	if len(gte) > 1:
 		print gte
+		gte[1] = parseParam(gte[1])
 		return {gte[0]:{"$gte": gte[1]}}
-	if len(lt) > 1:
+	if len(lte) > 1:
+		lte[1] = parseParam(lte[1])
 		print lte
 		return {lte[0]:{"$lte": lte[1]}}
 	if len(eq) > 1:
+		eq[1] = parseParam(eq[1])
 		print eq
 		return {eq[0]:eq[1]}
 	if len(gt) > 1:
+		gt[1] = parseParam(gt[1])
 		print gt
-		return {gt[0]:{"$gt": float(gt[1])}}
+		return {gt[0]:{"$gt": gt[1]}}
 	if len(lt) > 1:
+		lt[1] = parseParam(lt[1])
 		print lt
 		return {lt[0]:{"$lt": lt[1]}}
 	
-def getItems(dbName, collName, id=None, query=None):
+def getItems(dbName, collName, id=None, query=None, find=None):
 	conn = getConnection()
 	db = conn[dbName]
 	coll = db[collName]
 	if id != None:
 		res = coll.find({"_id":int(id)});
 	else:
-		if query == None:
-			res = coll.find()
-		else:
+		if find != None:
+			print find
+			res = coll.find(json.loads(find[0]))
+		elif query != None:
 			print query
 			res = coll.find(parseQuery(query[0]))
+		else:
+			res = coll.find()
 	items = list()
 	for item in res:
 		items.append(item)
@@ -70,7 +87,9 @@ class RootResource(resource.Resource):
 	isLeaf = True
 	def render_GET(self, request):
 		print request.postpath
-		if len(request.postpath) == 2 and request.args.has_key("query"):
+		if len(request.postpath) == 2 and request.args.has_key("find"):
+			return getItemsAsJson(getItems(request.postpath[0],request.postpath[1],find=request.args["find"]))
+		elif len(request.postpath) == 2 and request.args.has_key("query"):
 			return getItemsAsJson(getItems(request.postpath[0],request.postpath[1],query=request.args["query"]))
 		elif len(request.postpath) == 2:
 			return getItemsAsJson(getItems(request.postpath[0],request.postpath[1]))
