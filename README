@@ -1,0 +1,1 @@
+mongodb-rest provides a RESTful API for accessing a MongoDB database.  It is built on python and the twisted web framework.
