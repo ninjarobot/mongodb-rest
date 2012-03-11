@@ -22,12 +22,9 @@ def getConnection():
 def getItemsAsJson(items):
     return json.dumps(items, cls=MongoEncoder)
 
-def getItemsAsJsonDeferred(items):
-	d = threads.deferToThread(getItemsAsJson,items)
-	d.addCallback(getItemsAsJsonCallback)
-
-def getItemsAsJsonCallback(result):
-	return result
+def getItemsAsJsonCallback(result, request, encoding):
+	request.write(result.encode(encoding))
+	request.finish()
 
 def parseParam(p):
 	if string.find(p,'"') > -1:
@@ -62,7 +59,10 @@ def parseQuery(query):
 	if len(lt) > 1:
 		lt[1] = parseParam(lt[1])
 		return {lt[0]:{"$lt": lt[1]}}
-	
+
+def getItemsCallback(items):
+	return items
+
 def getItems(dbName, collName, id=None, query=None, find=None):
 	conn = getConnection()
 	db = conn[dbName]
@@ -85,13 +85,21 @@ class RootResource(resource.Resource):
 	isLeaf = True
 	def render_GET(self, request):
 		if len(request.postpath) == 2 and request.args.has_key("find"):
-			return getItemsAsJson(getItems(request.postpath[0],request.postpath[1],find=request.args["find"]))
+			d = threads.deferToThread(getItemsAsJson,getItems(request.postpath[0],request.postpath[1],find=request.args["find"]))
+			d.addCallback(getItemsAsJsonCallback, request, 'UTF-8')
+			return server.NOT_DONE_YET
 		elif len(request.postpath) == 2 and request.args.has_key("query"):
-			return getItemsAsJson(getItems(request.postpath[0],request.postpath[1],query=request.args["query"]))
+			d = threads.deferToThread(getItemsAsJson,getItems(request.postpath[0],request.postpath[1],query=request.args["query"]))
+			d.addCallback(getItemsAsJsonCallback, request, 'UTF-8')
+			return server.NOT_DONE_YET
 		elif len(request.postpath) == 2:
-			return getItemsAsJson(getItems(request.postpath[0],request.postpath[1]))
+			d = threads.deferToThread(getItemsAsJson,getItems(request.postpath[0],request.postpath[1]))
+			d.addCallback(getItemsAsJsonCallback, request, 'UTF-8')
+			return server.NOT_DONE_YET
 		elif len(request.postpath) == 3:
-			return getItemsAsJson(getItems(request.postpath[0],request.postpath[1], request.postpath[2]))
+			d = threads.deferToThread(getItemsAsJson,getItems(request.postpath[0],request.postpath[1],request.postpath[2]))
+			d.addCallback(getItemsAsJsonCallback, request, 'UTF-8')
+			return server.NOT_DONE_YET
 		else:
 			return "<html>%s</html>" % (request.__dict__);
 		
