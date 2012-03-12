@@ -9,6 +9,16 @@ http://localhost:8090/dbName/collectionName/id - this will return a single docum
 http://localhost:8090/dbName/collectionName?find={"someField":{"$gte":90}} - this will execute the MongoDB query document specified in the find parameter.  
 http://localhost:8090/dbName/collectionName?query=someField>=90 - this will do simple queries on a particular field.  Operators supported include =, !=, >, >=, <, <=.
 
+### Prerequisites
+- Twisted
+- Pymongo
+
+### Getting started
+1. Download restSvc.py
+2. Change the connection string (line 21) to match your DB if not connecting to localhost.
+3. Change the port (line 110) if you don't want to run on port 8090
+4. At a command line, run "twistd -y restSvc.py" to start twistd running the application.
+
 ### A few limitations:
 - Query only at this time.
 - Working on insert and update.
