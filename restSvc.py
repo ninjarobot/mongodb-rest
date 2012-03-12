@@ -1,5 +1,6 @@
 from twisted.web import server, resource, http
 from twisted.internet import reactor, threads
+from twisted.application import internet, service
 from pymongo import Connection
 import json
 from json import JSONEncoder
@@ -104,5 +105,7 @@ class RootResource(resource.Resource):
 			return "<html>%s</html>" % (request.__dict__);
 		
 site = server.Site(RootResource())
-reactor.listenTCP(8090, site)
-reactor.run()
+application = service.Application("mongodb-rest")
+sc = service.IServiceCollection(application)
+i = internet.TCPServer(8090, site)
+i.setServiceParent(sc)
