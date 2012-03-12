@@ -9,7 +9,7 @@ http://localhost:8090/dbName/collectionName/id - this will return a single docum
 http://localhost:8090/dbName/collectionName?find={"someField":{"$gte":90}} - this will execute the MongoDB query document specified in the find parameter.  
 http://localhost:8090/dbName/collectionName?query=someField>=90 - this will do simple queries on a particular field.  Operators supported include =, !=, >, >=, <, <=.
 
-* A few limitations:
+### A few limitations:
 - Query only at this time.
 - Working on insert and update.
 - There is no way to select partial documents.
